@@ -1,0 +1,69 @@
+#include <LiquidCrystal.h>
+#include <Keypad.h>
+#include <Servo.h>
+const int rs = 12, en = 11, d4 = 10, d5 = 9, d6 = 8, d7 = 7;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+const byte ROWS = 4;
+const byte COLS = 4;
+char keys[ROWS][COLS] = {
+{ '1', '2', '3', 'A' },
+{ '4', '5', '6', 'B' },
+{ '7', '8', '9', 'C' },
+{ '*', '0', '#', 'D' }
+};
+byte rowPins[ROWS] = { 26, 22, 21, 20 };
+byte colPins[COLS] = { 19, 18, 17, 16 };
+Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
+const int servoPin = 2;
+Servo lockServo;
+String enteredCode = "";
+const String correctCode = "123";
+bool accessGranted = false;
+void setup() {
+lcd.begin(16, 2);
+lcd.print("Enter Code:");
+lockServo.attach(servoPin);
+lockServo.write(90);
+}
+void loop() {
+char key = keypad.getKey();
+if (!accessGranted && key != NO_KEY) {
+lcd.setCursor(enteredCode.length(), 1);
+lcd.print('$');
+if (enteredCode.length() < 3) {
+enteredCode += key;
+}
+if (enteredCode.length() == 3) {
+if (enteredCode == correctCode) {
+accessGranted = true;
+grantAccess();
+} else {
+denyAccess();
+}
+resetCode();
+displayPrompt();
+}
+}
+}
+void grantAccess() {
+lcd.clear();
+lcd.print("Access Granted");
+unlockDoor();
+delay(1000);
+}
+void denyAccess() {
+lcd.clear();
+lcd.print("Access Denied");
+delay(2000);
+}
+void unlockDoor() {
+lockServo.write(0);
+delay(1000);
+}
+void resetCode() {
+enteredCode = "";
+}
+void displayPrompt() {
+lcd.clear();
+lcd.print("Enter Code:");
+}
